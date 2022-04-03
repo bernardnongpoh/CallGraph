@@ -1,38 +1,31 @@
 /*
 @Author: Bernard Nongpoh
-@Email: bernard.nongpoh@cea.fr
+@Email: bernard.nongpoh@gmail.com
 */
 
 #include"Graph.h"
 
-void Graph::addEdge(int src, int dest){
+void Graph::addEdge(Value *src, Value* dest){
       adjMap[src].push_back(dest);
       
 }
-
-
-
 
 int Graph::size(){
     return adjMap.size();
 }
 
-
-
-int Graph::addNode(llvm::Function *func){
-    int ID = func->getGUID();  //One Way mapping is sufficient, if GUID is globally unique.
-    idToFuncMap[ID]=func;
-    funcToIdMap[func]=ID;
-    return ID;
+Value* Graph::addNode(llvm::Function *func){
+  //  int ID = func->getGUID();  //One Way mapping is sufficient, if GUID is globally unique.
+    idToFuncMap[func]=func;
+    //funcToIdMap[func]=func;
+    return func;
 }
 
-llvm::Function* Graph::getFunctionByNodeId(int nodeId){
+llvm::Function* Graph::getFunctionByNodeId(Value *nodeId){
     return idToFuncMap[nodeId];
 }
   
-int Graph::getNodeIdByFunction(llvm::Function *func){
-    return funcToIdMap[func];
-}
+
 
 
 
@@ -53,13 +46,12 @@ void Graph::printGraph(){
                  unsigned int count=0;
                  for(auto const calleeNodeId: node.second){
                 
-                graphDot<<getFunctionByNodeId(node.first)->getName().str()<<node.first<<"->"<<getFunctionByNodeId(calleeNodeId)->getName().str()<<calleeNodeId<<";\n";
+                graphDot<<getFunctionByNodeId(node.first)->getName().str()<<"->"<<getFunctionByNodeId(calleeNodeId)->getName().str()<<";\n";
                           // Formatting Comma only
                     if(count!=node.second.size()-1)
                      {
                          graphFile<<"["<< getFunctionByNodeId(calleeNodeId)->getName().str()<<"],";
-                         
-
+                     
                            }
                     else
                    { 

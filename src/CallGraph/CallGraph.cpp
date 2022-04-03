@@ -1,4 +1,5 @@
 #include "Graph.h"
+#include "PointerAnalysis.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/SCCIterator.h"
@@ -18,6 +19,7 @@ struct CallGraphPass : public ModulePass {
   static char ID;
 
   Graph callgraph;
+  PointerAnalysis pointerAnalysis;
 
   CallGraphPass() : ModulePass(ID) {}
 
@@ -29,18 +31,62 @@ struct CallGraphPass : public ModulePass {
 
     for (Function &Func : M) {
 
-            int callerId=callgraph.addNode(&Func);
+            callgraph.addNode(&Func);
         // Collect callsite from this function
      
+
       for (BasicBlock &BB : Func) {
         for (Instruction &Ins : BB) {
-           
-          if(isa<CallInst>(Ins)){
+
+
+          
+            if(isa<StoreInst>(Ins)){
+                  StoreInst *storeInst = dyn_cast<StoreInst>(&Ins);
+                 
+                  Value* to = storeInst->getValueOperand()->stripPointerCasts();
+                
+	                Value* from = storeInst->getPointerOperand()->stripPointerCasts();
+                  // Add Points-To 
+                  pointerAnalysis.pointsTo(from,to);
+                  // Add to Worklist
+                  pointerAnalysis.addToWorkList(&Ins);
+                  continue;      
+              }
+              if(isa<LoadInst>(Ins)){
+                  LoadInst *loadInst = dyn_cast<LoadInst>(&Ins);
+
+                  Value* to = loadInst->getPointerOperand()->stripPointerCasts();
+	                Value* from = dyn_cast<Value>(loadInst);
+                  
+                  // Add Points-To 
+                  pointerAnalysis.pointsTo(from,to);
+                  // Add to Worklist
+                  pointerAnalysis.addToWorkList(&Ins);
+                  continue;      
+              }
               
-                CallInst *callInst = dyn_cast<CallInst>(&Ins);
-                Function *func=callInst->getCalledFunction();
-                int calleeId = callgraph.addNode(func);
-                callgraph.addEdge(callerId,calleeId);
+
+          else if(isa<CallInst>(Ins)){
+              CallBase *callBase = dyn_cast<CallBase>(&Ins);
+          
+                if(!callBase)
+                  { 
+                    // Maybe Indirect Call
+                    pointerAnalysis.addToWorkList(&Ins);
+                    continue;
+                  }
+                
+               // errs()<<*callInst;
+                if(callBase->isIndirectCall()){
+
+                  pointerAnalysis.addToWorkList(&Ins);
+                  continue;
+                }
+                //Direct Call 
+                Function *calleeFunc=callBase->getCalledFunction();
+
+                callgraph.addNode(calleeFunc);
+                callgraph.addEdge(&Func,calleeFunc);
                 
 
           }
@@ -55,6 +101,55 @@ struct CallGraphPass : public ModulePass {
 
   virtual bool doFinalization(llvm::Module &M){
      
+    
+     pointerAnalysis.printPointToSet();
+     //pointerAnalysis.processWorkList();
+
+      /* */
+    while(!pointerAnalysis.workList.empty()){
+        llvm::Instruction *inst = pointerAnalysis.workList.front();
+
+         if(isa<CallInst>(inst)){
+                
+                CallInst *callInst = dyn_cast<CallInst>(inst);
+                    
+                       
+
+                        //get Function Address.
+                        Function*func=pointerAnalysis.getFunction(callInst->getCalledOperand()->stripPointerCasts(),callgraph.idToFuncMap);
+
+                        if(func!=nullptr){
+                          // Add Edge 
+                          // from 
+                          errs()<<"Hererererer\n";
+                          callgraph.addEdge(callInst->getFunction(),func);
+                    
+                        }
+                        else{
+                          errs()<<*callInst;
+                          errs()<<"NULL";
+                        }
+
+                    
+                        
+                    
+             }
+
+
+
+        pointerAnalysis.workList.pop_front();
+
+    }
+
+
+
+
+
+      /* */
+
+
+
+
       callgraph.printGraph();
       return true;
   }

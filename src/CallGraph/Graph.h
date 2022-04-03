@@ -11,26 +11,26 @@
 
 using namespace std;
 using namespace clang;
-
+using namespace llvm;
 
 
 class Graph{
     
     public:
-        map<int,llvm::Function*> idToFuncMap;
-        map<llvm::Function*,int> funcToIdMap;
+        map<Value*,llvm::Function*> idToFuncMap;
+        map<llvm::Function*,Value*> funcToIdMap;
       
 
    
-    map<int,vector<int>> adjMap;
+    map<Value*,vector<Value*>> adjMap;
        
-    void addEdge(int srcNodeId, int destNodeId);
+    void addEdge(Value* srcNode, Value* destNode);
     int getRootId();
     int size();
-    int addNode(llvm::Function *func);
-    int getNodeId(llvm::Function *func);
-    llvm::Function *getFunctionByNodeId(int nodeId);
-    int getNodeIdByFunction(llvm::Function *func);
+    Value* addNode(llvm::Function *func);
+    Value* getNodeId(llvm::Function *func);
+    llvm::Function *getFunctionByNodeId(Value *node);
+   
     void printGraph();
    
     

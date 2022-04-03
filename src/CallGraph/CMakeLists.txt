@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.1)
 project(CallGraphProject)
 add_library(CallGraph MODULE
     # List your source files here.
-        CallGraph.cpp  Graph.cpp Graph.h)
+        CallGraph.cpp  Graph.cpp Graph.h PointerAnalysis.cpp PointerAnalysis.h)
 target_link_libraries(CallGraph)
 # Use C++11 to compile our pass (i.e., supply -std=c++11).
 target_compile_features(CallGraph PRIVATE cxx_range_for cxx_auto_type)
