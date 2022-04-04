@@ -65,6 +65,8 @@ struct CallGraphPass : public ModulePass {
           else if (isa<CallBase>(Ins)) {
             CallBase *callBase = dyn_cast<CallBase>(&Ins);
 
+           
+
             if (!callBase) {
               // Maybe Indirect Call
               pointerAnalysis->addToWorkList(&Ins);
@@ -79,6 +81,7 @@ struct CallGraphPass : public ModulePass {
             }
             // Direct Call
             Function *calleeFunc = callBase->getCalledFunction();
+             if(calleeFunc->isIntrinsic()) continue; // Ignored Function calls inserted by LLVM
 
              callgraph->addNode(calleeFunc);
              
