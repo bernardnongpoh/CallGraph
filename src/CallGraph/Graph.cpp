@@ -3,77 +3,76 @@
 @Email: bernard.nongpoh@gmail.com
 */
 
-#include"Graph.h"
+#include "Graph.h"
 
-void Graph::addEdge(Value *src, Value* dest){
-      adjMap[src].push_back(dest);
-      
+void Graph::addEdge(Value *src, Value *dest) {
+  if (!isEdgeExist(src, dest))
+    adjMap[src].push_back(dest);
 }
 
-int Graph::size(){
-    return adjMap.size();
+bool Graph::isEdgeExist(Value *src, Value *desc) {
+  for (auto e : adjMap[src]) {
+    if (e == desc)
+      return true;
+  }
+  return false;
 }
 
-Value* Graph::addNode(llvm::Function *func){
-  //  int ID = func->getGUID();  //One Way mapping is sufficient, if GUID is globally unique.
-    idToFuncMap[func]=func;
-    //funcToIdMap[func]=func;
-    return func;
+void Graph::addNode(llvm::Function *func) { idToFuncMap[func] = func; }
+
+llvm::Function *Graph::getFunctionByNodeValue(Value *value) {
+  return idToFuncMap[value];
 }
 
-llvm::Function* Graph::getFunctionByNodeId(Value *nodeId){
-    return idToFuncMap[nodeId];
-}
-  
+void Graph::printGraph() {
 
+  std::string graphFileName = "graph.text";
+  std::string graphFileNameDot = "graph.dot";
+  std::ofstream graphFile, graphDot;
+  graphFile.open(graphFileName);
+  graphDot.open(graphFileNameDot);
+  graphDot << "digraph G {"
+           << "\n";
 
+  for (auto const &node : adjMap) {
+    graphFile << "[" << getFunctionByNodeValue(node.first)->getName().str()
+              << "]:";
 
+    unsigned int count = 0;
+    for (auto const calleeNodeId : node.second) {
 
-void Graph::printGraph(){
+      graphDot << getFunctionByNodeValue(node.first)->getName().str() << "->"
+               << getFunctionByNodeValue(calleeNodeId)->getName().str()
+               << ";\n";
+      // Formatting Comma only
+      if (count != node.second.size() - 1) {
+        graphFile << "["
+                  << getFunctionByNodeValue(calleeNodeId)->getName().str()
+                  << "],";
 
+      } else {
+        graphFile << "["
+                  << getFunctionByNodeValue(calleeNodeId)->getName().str()
+                  << "]";
+      }
+      count++;
+    }
+    graphFile << "\n";
+  }
 
-    std::string graphFileName ="graph.text";
-     std::string graphFileNameDot ="graph.dot";
-    std::ofstream graphFile,graphDot;
-    graphFile.open(graphFileName);
-    graphDot.open(graphFileNameDot);
-    graphDot<<"digraph G {"<<"\n";
-
-     for (auto const& node : adjMap)
-            {
-                 graphFile<<"["<< getFunctionByNodeId(node.first)->getName().str()<<"]:";  
-                 
-                 unsigned int count=0;
-                 for(auto const calleeNodeId: node.second){
-                
-                graphDot<<getFunctionByNodeId(node.first)->getName().str()<<"->"<<getFunctionByNodeId(calleeNodeId)->getName().str()<<";\n";
-                          // Formatting Comma only
-                    if(count!=node.second.size()-1)
-                     {
-                         graphFile<<"["<< getFunctionByNodeId(calleeNodeId)->getName().str()<<"],";
-                     
-                           }
-                    else
-                   { 
-                       graphFile<<"["<< getFunctionByNodeId(calleeNodeId)->getName().str()<<"]"; 
-                 }
-                    count++;
-                
-                 } 
-                  graphFile<<"\n";
-
-            }
-           
-
- graphDot<<"}";
-
+  graphDot << "}";
 
   graphFile.close();
   graphDot.close();
- 
+  displayBanner();
+}
+
+map<Value *, llvm::Function *> Graph::getValueToFuncMap(){
+    return idToFuncMap;
+}
 
 
-   
+void Graph::displayBanner(){
+    errs()<<"Graphical Graph: xdot graph.dot\nText Format: gedit graph.txt\n";
 
-    }
-
+}

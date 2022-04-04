@@ -3,37 +3,28 @@
 @Email: bernard.nongpoh@gmail.com
 */
 
-
-#include "llvm/IR/Function.h"
 #include "clang/AST/AST.h"
-#include <iostream>
+#include "llvm/IR/Function.h"
 #include <fstream>
+#include <iostream>
 
 using namespace std;
 using namespace clang;
 using namespace llvm;
 
+class Graph {
 
-class Graph{
-    
-    public:
-        map<Value*,llvm::Function*> idToFuncMap;
-        map<llvm::Function*,Value*> funcToIdMap;
-      
+private:
+  map<Value *, llvm::Function *> idToFuncMap;
+  map<llvm::Function *, Value *> funcToIdMap;
+  map<Value *, vector<Value *>> adjMap;
+  bool isEdgeExist(Value *src, Value *desc);
 
-   
-    map<Value*,vector<Value*>> adjMap;
-       
-    void addEdge(Value* srcNode, Value* destNode);
-    int getRootId();
-    int size();
-    Value* addNode(llvm::Function *func);
-    Value* getNodeId(llvm::Function *func);
-    llvm::Function *getFunctionByNodeId(Value *node);
-   
-    void printGraph();
-   
-    
-
-
+public:
+  void addEdge(Value *srcNode, Value *destNode);
+  void addNode(llvm::Function *func);
+  llvm::Function *getFunctionByNodeValue(Value *node);
+  map<Value *, llvm::Function *> getValueToFuncMap();
+  void printGraph();
+  void displayBanner();
 };
